@@ -10,12 +10,18 @@ function trackEvent(name: string, props?: Record<string, unknown>) {
   }
 }
 
+function readIncrementFlag(): boolean {
+  return window.pendo?.isFeatureFlag?.("incrementCounterEnabled") ?? false;
+}
+
 export default function App() {
   const [state, setState] = useState<AppState>({
     counter: 0,
     lastAction: "none",
   });
   const [error, setError] = useState<string | null>(null);
+  const [incrementEnabled, setIncrementEnabled] =
+    useState<boolean>(readIncrementFlag);
 
   const run = async (name: string, fn: () => Promise<AppState>) => {
     try {
@@ -41,6 +47,16 @@ export default function App() {
   useEffect(() => {
     run("load", api.getState);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Re-evaluate the flag once Pendo has finished loading its flag data
+  // (initialize() is async; the snippet may not have resolved flags yet on
+  // the first render).
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIncrementEnabled(readIncrementFlag());
+    }, 500);
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -72,12 +88,14 @@ export default function App() {
           flexWrap: "wrap",
         }}
       >
-        <button
-          data-testid="btn-increment"
-          onClick={() => run("increment", api.increment)}
-        >
-          Increment
-        </button>
+        {incrementEnabled && (
+          <button
+            data-testid="btn-increment"
+            onClick={() => run("increment", api.increment)}
+          >
+            Increment
+          </button>
+        )}
         <button
           data-testid="btn-decrement"
           onClick={() => run("decrement", api.decrement)}

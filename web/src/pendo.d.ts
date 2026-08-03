@@ -9,6 +9,7 @@ declare global {
     initialize?: (config: Record<string, unknown>) => void;
     identify?: (config: Record<string, unknown>) => void;
     clearSession?: () => void;
+    isFeatureFlag?: (flagKey: string) => boolean;
   }
   interface Window {
     pendo?: PendoAgent;
